@@ -12,6 +12,20 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Implementación de la lógica de negocio para la legalización y despacho de entregas a beneficiarios.
+ * <p>
+ * Aplica transaccionalidad atómica y valida las siguientes reglas de negocio del ECS-01:
+ * </p>
+ * <ul>
+ *   <li><b>RN-12:</b> Cobertura exclusiva para beneficiarios validados en estratos socioeconómicos 1, 2 y 3.</li>
+ *   <li><b>RN-16:</b> Control preventivo de inventario para evitar sobregiros de existencias antes de emitir el acta.</li>
+ * </ul>
+ *
+ * @author Albert Higuita Bautista
+ * @author Weimar Esteban Serna Asprilla
+ * @version 1.0.0
+ */
 @Service
 public class EntregaServiceImpl implements EntregaService {
 
@@ -21,6 +35,15 @@ public class EntregaServiceImpl implements EntregaService {
     private final ProductoRepository productoRepository;
     private final InventarioService inventarioService;
 
+    /**
+     * Constructor con inyección de repositorios y del servicio de inventario.
+     *
+     * @param entregaRepository      Repositorio de entregas.
+     * @param beneficiarioRepository Repositorio de beneficiarios.
+     * @param usuarioRepository      Repositorio de usuarios.
+     * @param productoRepository     Repositorio de productos.
+     * @param inventarioService      Servicio para decremento del stock disponible.
+     */
     public EntregaServiceImpl(EntregaRepository entregaRepository, BeneficiarioRepository beneficiarioRepository,
                               UsuarioRepository usuarioRepository, ProductoRepository productoRepository,
                               InventarioService inventarioService) {
@@ -31,6 +54,19 @@ public class EntregaServiceImpl implements EntregaService {
         this.inventarioService = inventarioService;
     }
 
+    /**
+     * Formaliza una entrega a un comedor comunitario o familia vulnerable, descontando existencias en bodega.
+     *
+     * @param idBeneficiario Identificador del beneficiario que solicita la ayuda.
+     * @param idUsuario      Identificador del funcionario responsable del despacho.
+     * @param fecha          Fecha de expedición y entrega.
+     * @param ruta           Código formal del acta o ruta de entrega.
+     * @param idProducto     Identificador del producto a entregar.
+     * @param cantidad       Cantidad solicitada a entregar.
+     * @param observaciones  Observaciones o constancia de entrega.
+     * @return Entidad {@link Entrega} persistida con su respectivo {@link DetalleEntrega}.
+     * @throws BusinessRuleException Si el beneficiario pertenece a estratos 4..6 (RN-12) o si hay sobregiro (RN-16).
+     */
     @Override
     @Transactional
     public Entrega registrarEntregaConDetalle(Long idBeneficiario, Long idUsuario, LocalDate fecha,
@@ -69,6 +105,11 @@ public class EntregaServiceImpl implements EntregaService {
         return entregaRepository.save(entrega);
     }
 
+    /**
+     * Retorna todas las entregas legalizadas en el sistema.
+     *
+     * @return Lista de entregas.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<Entrega> listarTodas() {

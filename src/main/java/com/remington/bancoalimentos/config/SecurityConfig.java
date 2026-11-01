@@ -12,18 +12,45 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Configuración de seguridad perimetral y control de acceso basado en roles (RBAC).
+ * <p>
+ * Implementa las directrices de seguridad documentadas en el proyecto técnico:
+ * </p>
+ * <ul>
+ *   <li>Cifrado irreversible de credenciales mediante el algoritmo {@link BCryptPasswordEncoder}.</li>
+ *   <li>Gestión de identidades con roles diferenciados: ADMIN, COORDINADOR_DONACIONES, RESPONSABLE_INVENTARIO.</li>
+ *   <li>Protección contra ataques CSRF en todas las peticiones mutables del sistema.</li>
+ *   <li>Políticas de autorización de rutas con redirección automática al formulario de inicio de sesión.</li>
+ * </ul>
+ *
+ * @author Albert Higuita Bautista
+ * @author Weimar Esteban Serna Asprilla
+ * @version 1.0.0
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    /**
+     * Define el bean codificador de contraseñas utilizando el algoritmo BCrypt con factor de costo estándar.
+     *
+     * @return Instancia de {@link PasswordEncoder} basada en BCrypt.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Configura el servicio de usuarios en memoria con credenciales semilla para pruebas inmediatas
+     * según los perfiles de usuario estipulados en los casos de uso del documento.
+     *
+     * @param encoder Codificador de contraseñas inyectado.
+     * @return Gestor de detalles de usuario {@link UserDetailsService}.
+     */
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder encoder) {
-        // Usuarios semilla para pruebas inmediatas según los roles del documento
         UserDetails admin = User.builder()
                 .username("admin")
                 .password(encoder.encode("admin123"))
@@ -45,6 +72,14 @@ public class SecurityConfig {
         return new InMemoryUserDetailsManager(admin, donaciones, inventario);
     }
 
+    /**
+     * Configura la cadena de filtros de seguridad HTTP, definiendo las reglas de autorización,
+     * el formulario de autenticación predeterminado y la sesión de usuario.
+     *
+     * @param http Objeto {@link HttpSecurity} para construir las políticas.
+     * @return Cadena de filtros compilada {@link SecurityFilterChain}.
+     * @throws Exception Si ocurre un fallo en la construcción de los filtros.
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http

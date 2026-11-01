@@ -73,25 +73,25 @@
 
             <div class="grid">
                 <div>
-                    <label>Cantidad Recibida:</label>
-                    <input type="number" step="0.01" min="0.01" name="cantidadRecibida" placeholder="Ej: 50.0" required />
+                    <label>Cantidad Donada:</label>
+                    <input type="number" step="0.01" min="0.01" name="cantidad" placeholder="Ej: 50.0" required />
                 </div>
                 <div>
-                    <label>Inspección de Calidad (RN-14):</label>
-                    <select name="estadoCalidad" required>
-                        <option value="APTO">APTO (Ingresa a Inventario)</option>
-                        <option value="RECHAZADO">RECHAZADO (No ingresa por salubridad)</option>
+                    <label>Inspección Sanitaria (RN-14):</label>
+                    <select name="estadoAlimento" required>
+                        <option value="APTO">APTO (Cumple salubridad - Ingresa a Inventario)</option>
+                        <option value="RECHAZADO">RECHAZADO (Averiado/Vencido - No ingresa a Inventario)</option>
                     </select>
                 </div>
                 <div>
-                    <label>Fecha de Vencimiento:</label>
-                    <input type="date" name="fechaVencimiento" required />
+                    <label>Número de Lote:</label>
+                    <input type="text" name="numeroLote" placeholder="Ej: LOTE-2026-X" required />
                 </div>
             </div>
 
             <div style="margin-bottom: 10px;">
-                <label>Número de Lote:</label>
-                <input type="text" name="numeroLote" placeholder="Ej: LOTE-2026-X" style="width: 32%;" required />
+                <label>Observaciones de Recepción:</label>
+                <input type="text" name="observaciones" placeholder="Ej: Embalaje en perfectas condiciones, recibido en bodega norte" />
             </div>
 
             <div style="margin-top: 15px;">
@@ -116,12 +116,12 @@
         <tr th:each="d : ${donaciones}">
             <td th:text="${d.idDonacion}">1</td>
             <td th:text="${d.donante.nombreRazonSocial}">Grupo Éxito</td>
-            <td th:text="${d.usuario.nombreCompleto}">Admin</td>
-            <td th:text="${#temporals.format(d.fechaDonacion, 'dd/MM/yyyy HH:mm')}">01/11/2026</td>
-            <td th:text="${d.estado}">RECIBIDA</td>
+            <td th:text="${d.usuarioRegistra.nombreCompleto}">Admin</td>
+            <td th:text="${#temporals.format(d.fechaDonacion, 'dd/MM/yyyy')}">01/11/2026</td>
+            <td th:text="${d.estado}">ACTIVO</td>
             <td>
                 <ul>
-                    <li th:each="det : ${d.detalles}" th:text="${det.producto.nombreProducto} + ' - ' + ${det.cantidadRecibida} + ' ' + ${det.producto.unidadMedida} + ' [' + ${det.estadoCalidad} + ']'"></li>
+                    <li th:each="det : ${d.detalles}" th:text="${det.producto.nombreProducto} + ' - ' + ${det.cantidad} + ' ' + ${det.producto.unidadMedida} + ' [' + ${det.estadoAlimento} + ']'"></li>
                 </ul>
             </td>
         </tr>

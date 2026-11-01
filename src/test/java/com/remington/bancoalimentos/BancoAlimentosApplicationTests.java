@@ -10,7 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -18,6 +17,22 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Suite de pruebas automatizadas de integración y validación de reglas de negocio (JUnit 5 + Spring Boot Test).
+ * <p>
+ * Verifica el comportamiento integral del corte vertical (Vertical Slice) evaluando:
+ * </p>
+ * <ul>
+ *   <li><b>Test 01:</b> Incremento automático de stock en inventario tras donación apta (RN-07).</li>
+ *   <li><b>Test 02:</b> Rechazo de donación y bloqueo de inventario ante alimentos con averías o no conformidades sanitarias (RN-14).</li>
+ *   <li><b>Test 03:</b> Rechazo y lanzamiento de {@link BusinessRuleException} para beneficiarios con estrato superior a 3 (RN-12).</li>
+ *   <li><b>Test 04:</b> Prevención de sobregiros de existencias en bodega física (RN-16).</li>
+ * </ul>
+ *
+ * @author Albert Higuita Bautista
+ * @author Weimar Esteban Serna Asprilla
+ * @version 1.0.0
+ */
 @SpringBootTest
 @Transactional
 class BancoAlimentosApplicationTests {
@@ -43,6 +58,10 @@ class BancoAlimentosApplicationTests {
     @Autowired
     private BeneficiarioRepository beneficiarioRepository;
 
+    /**
+     * Valida que una donación con inspección calificada como "APTO" incremente de forma exacta
+     * las existencias del producto en la bodega central.
+     */
     @Test
     @DisplayName("Test 01: Registrar donación válida incrementa stock en inventario (RN-07)")
     void testRegistrarDonacionIncrementaStock() {
@@ -67,6 +86,10 @@ class BancoAlimentosApplicationTests {
         assertEquals(stockInicial.add(new BigDecimal("50.00")), stockFinal);
     }
 
+    /**
+     * Valida que la regla RN-14 impida la recepción de alimentos calificados como "RECHAZADO",
+     * abortando la transacción mediante {@link BusinessRuleException}.
+     */
     @Test
     @DisplayName("Test 02: Rechazar donación si el alimento viene averiado o en mal estado (RN-14)")
     void testRechazarDonacionAlimentoNoApto() {
@@ -87,6 +110,10 @@ class BancoAlimentosApplicationTests {
         });
     }
 
+    /**
+     * Valida que la regla RN-12 rechace la entrega de raciones de alimentos a beneficiarios
+     * clasificados en estratos socioeconómicos 4, 5 o 6.
+     */
     @Test
     @DisplayName("Test 03: Rechazar entrega si el beneficiario no pertenece a estratos 1, 2 o 3 (RN-12)")
     void testRechazarEntregaBeneficiarioEstratoInvalido() {
@@ -116,6 +143,10 @@ class BancoAlimentosApplicationTests {
         });
     }
 
+    /**
+     * Valida que la regla RN-16 bloquee cualquier intento de despacho cuya cantidad
+     * supere el saldo en existencia disponible en bodega central.
+     */
     @Test
     @DisplayName("Test 04: Rechazar entrega si la cantidad supera el saldo en inventario (RN-16)")
     void testRechazarEntregaSuperaSaldos() {

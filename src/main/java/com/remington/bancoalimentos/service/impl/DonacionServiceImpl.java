@@ -12,6 +12,21 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Implementación de la lógica de negocio para la recepción y trazabilidad de donaciones.
+ * <p>
+ * Aplica transaccionalidad atómica y hace cumplir las siguientes reglas de negocio del ECS-01:
+ * </p>
+ * <ul>
+ *   <li><b>RN-04:</b> Solamente los donantes con estado "ACTIVO" están habilitados para realizar donaciones.</li>
+ *   <li><b>RN-11:</b> No es posible inactivar una donación que posea detalles de alimentos vinculados.</li>
+ *   <li><b>RN-14:</b> Los productos en estado "RECHAZADO" por averías o no conformidad sanitaria son bloqueados para ingreso a inventario.</li>
+ * </ul>
+ *
+ * @author Albert Higuita Bautista
+ * @author Weimar Esteban Serna Asprilla
+ * @version 1.0.0
+ */
 @Service
 public class DonacionServiceImpl implements DonacionService {
 
@@ -22,6 +37,16 @@ public class DonacionServiceImpl implements DonacionService {
     private final DetalleDonacionRepository detalleDonacionRepository;
     private final InventarioService inventarioService;
 
+    /**
+     * Constructor con inyección de dependencias para los repositorios de entidades y el servicio de inventario.
+     *
+     * @param donacionRepository        Repositorio de donaciones.
+     * @param donanteRepository         Repositorio de donantes.
+     * @param usuarioRepository         Repositorio de usuarios.
+     * @param productoRepository        Repositorio de productos.
+     * @param detalleDonacionRepository Repositorio de renglones de donación.
+     * @param inventarioService         Servicio para actualización del stock central.
+     */
     public DonacionServiceImpl(DonacionRepository donacionRepository, DonanteRepository donanteRepository,
                                UsuarioRepository usuarioRepository, ProductoRepository productoRepository,
                                DetalleDonacionRepository detalleDonacionRepository, InventarioService inventarioService) {
@@ -33,10 +58,23 @@ public class DonacionServiceImpl implements DonacionService {
         this.inventarioService = inventarioService;
     }
 
+    /**
+     * Registra una donación, su renglón de detalle y actualiza el inventario en una única transacción atómica.
+     *
+     * @param idDonante       Identificador del donante.
+     * @param idUsuario       Identificador del usuario receptor.
+     * @param fecha           Fecha de recepción de los alimentos.
+     * @param idProducto      Identificador del alimento donado.
+     * @param cantidad        Masa o volumen físico recibido.
+     * @param estadoAlimento  Calificación sanitaria ("APTO" o "RECHAZADO").
+     * @param observaciones   Observaciones sobre el lote o estado del empaque.
+     * @return Entidad {@link Donacion} creada y persistida con éxito.
+     * @throws BusinessRuleException Si el donante no existe, no está activo (RN-04) o el alimento es rechazado (RN-14).
+     */
     @Override
     @Transactional
     public Donacion registrarDonacionConDetalle(Long idDonante, Long idUsuario, LocalDate fecha,
-                                              Long idProducto, BigDecimal cantidad, String estadoAlimento, String observaciones) {
+                                               Long idProducto, BigDecimal cantidad, String estadoAlimento, String observaciones) {
         // RN-04: Donante debe existir y estar activo
         Donante donante = donanteRepository.findById(idDonante)
                 .orElseThrow(() -> new BusinessRuleException("Donante no encontrado: " + idDonante));
@@ -81,12 +119,23 @@ public class DonacionServiceImpl implements DonacionService {
         return saved;
     }
 
+    /**
+     * Consulta el histórico de todas las donaciones registradas en base de datos.
+     *
+     * @return Lista de donaciones.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<Donacion> listarTodas() {
         return donacionRepository.findAll();
     }
 
+    /**
+     * Inactiva lógicamente una donación siempre que no cuente con detalles asociados.
+     *
+     * @param idDonacion Identificador de la donación a dar de baja.
+     * @throws BusinessRuleException Si la donación contiene alimentos asociados (RN-11).
+     */
     @Override
     @Transactional
     public void inactivarDonacion(Long idDonacion) {

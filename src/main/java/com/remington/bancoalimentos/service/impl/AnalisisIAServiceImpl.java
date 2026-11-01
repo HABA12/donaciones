@@ -12,6 +12,18 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
+/**
+ * Implementación del servicio de analítica predictiva y asistente inteligente mediante la API de Groq Cloud.
+ * <p>
+ * Se comunica de forma segura mediante HTTPS con el endpoint de inferencia de Groq, empleando
+ * el modelo de lenguaje de código abierto {@code openai/gpt-oss-120b} para generar diagnósticos
+ * fundamentados en el estado operacional real de la base de datos MySQL (existencias, donaciones y entregas).
+ * </p>
+ *
+ * @author Albert Higuita Bautista
+ * @author Weimar Esteban Serna Asprilla
+ * @version 1.0.0
+ */
 @Service
 public class AnalisisIAServiceImpl implements AnalisisIAService {
 
@@ -29,6 +41,13 @@ public class AnalisisIAServiceImpl implements AnalisisIAService {
     private final EntregaRepository entregaRepository;
     private final RestTemplate restTemplate;
 
+    /**
+     * Constructor con inyección de dependencias para los repositorios de datos del sistema.
+     *
+     * @param inventarioRepository Repositorio de existencias físicas en bodega.
+     * @param donacionRepository   Repositorio para conteo y trazabilidad de donaciones.
+     * @param entregaRepository    Repositorio para conteo de despachos comunitarios.
+     */
     public AnalisisIAServiceImpl(InventarioRepository inventarioRepository,
                                  DonacionRepository donacionRepository,
                                  EntregaRepository entregaRepository) {
@@ -38,6 +57,12 @@ public class AnalisisIAServiceImpl implements AnalisisIAService {
         this.restTemplate = new RestTemplate();
     }
 
+    /**
+     * Construye un contexto dinámico a partir del inventario disponible en MySQL y formula un prompt
+     * especializado para que el modelo de IA genere el diagnóstico predictivo de mermas y rotación.
+     *
+     * @return Diagnóstico predictivo estructurado en viñetas profesionales.
+     */
     @Override
     public String generarAnalisisPredictivo() {
         List<Inventario> inventarios = inventarioRepository.findAll();
@@ -66,6 +91,12 @@ public class AnalisisIAServiceImpl implements AnalisisIAService {
         return llamarGroq(prompt);
     }
 
+    /**
+     * Envía una consulta en lenguaje natural formulada por el usuario hacia el modelo Groq.
+     *
+     * @param pregunta Interrogante o solicitud técnica/logística.
+     * @return Respuesta generada por el asistente.
+     */
     @Override
     public String consultarIA(String pregunta) {
         String prompt = "Eres el asistente inteligente del Banco de Alimentos de Medellín. " +
@@ -73,6 +104,14 @@ public class AnalisisIAServiceImpl implements AnalisisIAService {
         return llamarGroq(prompt);
     }
 
+    /**
+     * Realiza la llamada HTTP POST mediante {@link RestTemplate} hacia la API de Groq Cloud
+     * con autenticación Bearer y formato JSON estándar OpenAI.
+     *
+     * @param userPrompt Texto consolidado del requerimiento enviado al modelo.
+     * @return Contenido textual devuelto por el modelo o mensaje de error descriptivo.
+     */
+    @SuppressWarnings("unchecked")
     private String llamarGroq(String userPrompt) {
         try {
             HttpHeaders headers = new HttpHeaders();

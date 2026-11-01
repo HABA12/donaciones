@@ -76,11 +76,11 @@
             <div class="grid">
                 <div>
                     <label>Cantidad Solicitada (RN-16: Stock suficiente):</label>
-                    <input type="number" step="0.01" min="0.01" name="cantidadEntregada" placeholder="Ej: 20.0" required />
+                    <input type="number" step="0.01" min="0.01" name="cantidad" placeholder="Ej: 20.0" required />
                 </div>
                 <div>
-                    <label>Código de Acta de Despacho:</label>
-                    <input type="text" name="codigoActa" placeholder="Ej: ACTA-2026-MED-01" required />
+                    <label>Código de Acta / Ruta de Entrega:</label>
+                    <input type="text" name="ruta" placeholder="Ej: ACTA-2026-MED-01" required />
                 </div>
                 <div>
                     <label>Observaciones de Entrega:</label>
@@ -98,7 +98,8 @@
     <table>
         <thead>
         <tr>
-            <th>Acta</th>
+            <th>ID</th>
+            <th>Acta / Ruta</th>
             <th>Beneficiario</th>
             <th>Estrato</th>
             <th>Despachado por</th>
@@ -109,15 +110,16 @@
         </thead>
         <tbody>
         <tr th:each="e : ${entregas}">
-            <td><strong th:text="${e.codigoActa}">ACTA-001</strong></td>
+            <td th:text="${e.idEntrega}">1</td>
+            <td><strong th:text="${e.rutaEntrega}">ACTA-001</strong></td>
             <td th:text="${e.beneficiario.nombreBeneficiario}">Comedor Comuna 13</td>
             <td th:text="'Estrato ' + ${e.beneficiario.estratoSocioeconomico}">Estrato 1</td>
-            <td th:text="${e.usuario.nombreCompleto}">Admin</td>
-            <td th:text="${#temporals.format(e.fechaEntrega, 'dd/MM/yyyy HH:mm')}">01/11/2026</td>
-            <td th:text="${e.estado}">COMPLETADA</td>
+            <td th:text="${e.usuarioResponsable.nombreCompleto}">Admin</td>
+            <td th:text="${#temporals.format(e.fechaEntrega, 'dd/MM/yyyy')}">01/11/2026</td>
+            <td th:text="${e.estado}">ACTIVO</td>
             <td>
                 <ul>
-                    <li th:each="det : ${e.detalles}" th:text="${det.producto.nombreProducto} + ': ' + ${det.cantidadEntregada} + ' ' + ${det.producto.unidadMedida}"></li>
+                    <li th:each="det : ${e.detalles}" th:text="${det.producto.nombreProducto} + ': ' + ${det.cantidad} + ' ' + ${det.producto.unidadMedida}"></li>
                 </ul>
             </td>
         </tr>
